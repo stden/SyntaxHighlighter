@@ -30,10 +30,10 @@ queue(function()
 
 	test('basic html check of default elements', function()
 	{
-		$sh = $('#sh_003_script_tag');
+		$sh = getSh('#sh_003_script_tag');
 		
 		ok_sh($sh);
-		ok_toolbar($sh);
+		ok_promo($sh);
 		ok_caption($sh, 'Title/caption should render');
 		ok_gutter($sh);
 		ok_code($sh);

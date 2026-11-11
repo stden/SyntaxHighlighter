@@ -1,0 +1,46 @@
+.syntaxhighlighter {
+	a,
+	div,
+	code,
+	table,
+	table td,
+	table tr,
+	table tbody,
+	table thead,
+	table caption,
+	textarea {
+		@include round_corners(0);
+		
+		background     : none;
+		border         : 0;
+		bottom         : auto;
+		float          : none;
+		height         : auto;
+		left           : auto;
+		margin         : 0;
+		outline        : 0;
+		overflow       : visible;
+		padding        : 0;
+		position       : static;
+		right          : auto;
+		text-align     : left;
+		top            : auto;
+		vertical-align : baseline;
+		width          : auto;
+		box-sizing     : content-box;
+
+		font: {
+			family : "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+			weight : normal;
+			style  : normal;
+			size   : 1em;
+		}
+
+		min: {
+			// For IE8, FF & WebKit
+			height: inherit;
+			// For IE7
+			height: auto;
+		}
+	}
+}

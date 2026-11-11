@@ -1,0 +1,17 @@
+@mixin round_corners_custom($top, $right, $bottom, $left) {
+	-moz-border-radius    : $top $right $bottom $left;
+	-webkit-border-radius : $top $right $bottom $left;
+	border-radius         : $top $right $bottom $left;
+}
+
+@mixin round_corners($radius) {
+	-moz-border-radius    : $radius;
+	-webkit-border-radius : $radius;
+	border-radius         : $radius;
+}
+
+@mixin border-box() {
+	-moz-box-sizing    : border-box;
+	-webkit-box-sizing : border-box;
+	box-sizing         : border-box;
+}

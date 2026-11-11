@@ -1,99 +1,313 @@
 //
 // Begin anonymous function. This is used to contain local scope variables without polutting global scope.
 //
-if (typeof(SyntaxHighlighter) == 'undefined') var SyntaxHighlighter = function() { 
+if (typeof(SyntaxHighlighter) == 'undefined') var SyntaxHighlighter = function(window) { 
 
 // CommonJS
 if (typeof(require) != 'undefined' && typeof(XRegExp) == 'undefined')
-{
 	XRegExp = require('XRegExp').XRegExp;
-}
+
+var document       = window.document,
+	CLASS_NAME     = 'syntaxhighlighter',
+	DOT_CLASS_NAME = '.' + CLASS_NAME,
+	COLLAPSED      = 'collapsed'
+	;
 
 // Shortcut object which will be assigned to the SyntaxHighlighter variable.
 // This is a shorthand for local reference in order to avoid long namespace 
 // references to SyntaxHighlighter.whatever...
 var sh = {
+	/**
+	 * SyntaxHighlight comes with a vast number of settings that could be changed to alter and configure
+	 * code blocks to do different things. There are per-block settings and global settings. The messages
+	 * that are displayed can also be altered in case you want to localize them
+	 * 
+	 * @author agorbatchev
+	 * @id settings
+	 */
+
+	/**
+	 * #### Defaults
+	 *
+	 * `SyntaxHighlighter.defaults` holds default values that are used for each highlighted element on
+	 * the page. These options are local to each highlighter element and could be changed individually 
+	 * via parameters. 
+	 *
+	 * To set defaults you can either directly change the values in JavaScript like so:
+	 *
+	 * <pre class="brush: js">
+	 * SyntaxHighlighter.defaults['gutter']     = false;
+	 * SyntaxHighlighter.defaults['smart-tabs'] = false;
+	 * ...
+	 * SyntaxHighlighter.all();
+	 * </pre>
+	 *
+	 * #### Parameters
+	 *
+	 * Parameters allow you to customize each highlighted element individually to your liking. Key/value 
+	 * pairs are specified in the format similar to CSS, but instead of the style node attribute, they go
+	 * together with the brush declaration into the class attribute.
+	 *
+	 * @author agorbatchev
+	 * @id options
+	 */
 	defaults : {
-		/** Additional CSS class names to be added to highlighter elements. */
-		'class-name' : '',
-		
-		/** First line number. */
+		/**
+		 * Allows you to change the first (starting) line number.
+		 *
+		 * @name first-line
+		 * @default 1
+		 * @author agorbatchev
+		 * @id options.firstLine
+		 */
 		'first-line' : 1,
 		
 		/**
 		 * Pads line numbers. Possible values are:
 		 *
-		 *   false - don't pad line numbers.
-		 *   true  - automaticaly pad numbers with minimum required number of leading zeroes.
-		 *   [int] - length up to which pad line numbers.
+		 *  * `false` - don't pad line numbers.
+		 *  * `true` - automaticaly pad numbers with minimum required number of leading zeroes.
+		 *  * `Number` - length up to which pad line numbers.
+		 *
+		 * @name pad-line-numbers
+		 * @default false
+		 * @author agorbatchev
+		 * @id options.padLineNumbers
 		 */
 		'pad-line-numbers' : false,
 		
-		/** Lines to highlight. */
+		/**
+		 * Allows you to highlight one or more lines to focus user’s attention. When specifying as a 
+		 * parameter, you have to pass an array value, like `[ 1, 2, 3 ]` or just an `Number` for a 
+		 * single line. If you are changing `SyntaxHighlighter.defaults['highlight']`, you can pass a
+		 * `Number` or an `Array` of numbers.
+		 *
+		 * @name highlight
+		 * @default null
+		 * @author agorbatchev
+		 * @id options.highlight
+		 */
 		'highlight' : null,
 		
-		/** Title to be displayed above the code block. */
+		/**
+		 * Title to be displayed above the code block.
+		 *
+		 * @name title
+		 * @default null
+		 * @author agorbatchev
+		 * @id options.title
+		 */
 		'title' : null,
 		
-		/** Enables or disables smart tabs. */
+		/**
+		 * Smart tabs is a formatting feature that will align tab separated content into vertical
+		 * columns. Most modern IDEs and editors do this and it makes the code look neater.
+		 *
+		 * @name smart-tabs
+		 * @default true
+		 * @author agorbatchev
+		 * @id options.smartTabs
+		 */
 		'smart-tabs' : true,
 		
-		/** Gets or sets tab size. */
+		/**
+		 * Tab size works together with smart tabs feature and determines size of a tab column.
+		 * Most common tab sizes are `4`, `8` and `2`.
+		 *
+		 * @name tab-size
+		 * @default 4
+		 * @author agorbatchev
+		 * @id options.tabSize
+		 */
 		'tab-size' : 4,
 		
-		/** Enables or disables gutter. */
-		'gutter' : true,
+		/**
+		 * Toggles the gutter with line numbers on and off.
+		 *
+		 * @name gutter
+		 * @default false
+		 * @author agorbatchev
+		 * @id options.gutter
+		 */
+		'gutter' : false,
 		
-		/** Enables or disables toolbar. */
-		'toolbar' : true,
-		
-		/** Enables quick code copy and paste from double click. */
-		'quick-code' : true,
-		
-		/** Forces code view to be collapsed. */
-		'collapse' : false,
-		
-		/** Enables or disables automatic links. */
+		/**
+		 * Allows you to turn detection of links in the highlighted element on and off. If the option
+		 * is turned off, URLs won’t be clickable.
+		 *
+		 * @name auto-links
+		 * @default true
+		 * @author agorbatchev
+		 * @id options.autoLinks
+		 */
 		'auto-links' : true,
 		
-		/** Gets or sets light mode. Equavalent to turning off gutter and toolbar. */
-		'light' : false,
-
+		/**
+		 * Will remove all the common leading spaces from formatted code. This allows you to have your
+		 * HTML neatly indented and that extra indentation won't carry over into the highlighted source.
+		 *
+		 * @name unindent
+		 * @default true
+		 * @author agorbatchev
+		 * @id options.unindent
+		 */
 		'unindent' : true,
+
+		/**
+		 * If user double clicks anywhere on the code, the whole code block will be selected. This allows
+		 * users to quickly and easily select the whole source code block and copy it to the clipboard.
+		 *
+		 * @name quick-code
+		 * @default true
+		 * @author agorbatchev
+		 * @id options.quickCode
+		 */
+		'quick-code' : true,
 		
+		/**
+		 * Allows you to highlight a mixture of HTML/XML code and another code which is very common in
+		 * web development (PHP is a good example of this). Setting this value to `true` requires that 
+		 * you have `shBrushXml.js` loaded and that the brush you are using supports this feature.
+		 *
+		 * @name html-script
+		 * @default false
+		 * @author agorbatchev
+		 * @id options.htmlScript
+		 */
 		'html-script' : false
 	},
 	
+	/**
+	 * `SyntaxHighlighter.config` has configuration values that are common to all highlighted elements 
+	 * on the page and don’t make much sense within context of a single highlighted element. These could
+	 * be considered as script configuration.
+	 *
+	 * @author agorbatchev
+	 * @id config
+	 */
 	config : {
-		space : '&nbsp;',
-		
-		/** Enables use of <SCRIPT type="syntaxhighlighter" /> tags. */
-		useScriptTags : true,
-		
-		/** Blogger mode flag. */
+		/**
+		 * Allows you to toggle padding around the code blocks on and off. This is a convinient place 
+		 * to do this instead of having to go into CSS and edit the files.
+		 *
+		 * @name padding
+		 * @default true
+		 * @author agorbatchev
+		 * @id config.padding
+		 */
+		padding : true,
+
+		/**
+		 * Code block font size. This is a convinient place to change this value instead of
+		 * having to go into CSS and edit the files.
+		 *
+		 * @name fontSize
+		 * @default ".9em"
+		 * @author agorbatchev
+		 * @id config.fontSize
+		 */
+		fontSize : '.9em',
+
+		/**
+		 * Allows you to quickly override theme's background color. Any value other than `null` will
+		 * overwrite current theme's background. This is a convinient place to change this value 
+		 * instead of having to go into CSS and edit the files.
+		 *
+		 * @name background
+		 * @default null
+		 * @author agorbatchev
+		 * @id config.background
+		 */
+		background : null,
+
+		/**
+		 * Blogger integration. If you are hosting on blogger.com, you must set this to `true`. Turning
+		 * this on will replace each `<br/>` with a new line character.
+		 *
+		 * @name bloggerMode
+		 * @default false
+		 * @author agorbatchev
+		 * @id config.bloggerMode
+		 */
 		bloggerMode : false,
 		
+		/**
+		 * If your software adds `<br/>` tags at the end of each line, this option allows you to strip
+		 * those out.
+		 *
+		 * @name stripBrs
+		 * @default false
+		 * @author agorbatchev
+		 * @id config.stripBrs
+		 */
 		stripBrs : false,
 		
-		/** Name of the tag that SyntaxHighlighter will automatically look for. */
+		/**
+		 * Name of the tag that SyntaxHighlighter will automatically look for.
+		 *
+		 * @name tagName
+		 * @default "pre"
+		 * @author agorbatchev
+		 * @id config.tagName
+		 */
 		tagName : 'pre',
-		
-		strings : {
-			expandSource : 'expand source',
-			help : '?',
-			alert: 'SyntaxHighlighter\n\n',
-			noBrush : 'Can\'t find brush for: ',
-			brushNotHtmlScript : 'Brush wasn\'t configured for html-script option: ',
-			
-			// this is populated by the build script
-			aboutDialog : '@ABOUT@'
-		}
+	},
+
+	/**
+	 * This configuration option allows you to localize your highlighted elements or just change the
+	 * displayed strings.
+	 *
+	 * @author agorbatchev
+	 * @id strings
+	 */
+	strings : {
+		/**
+		 * Displayed when `collapse` option is set to `true` and no `title` option set.
+		 *
+		 * @name expandSource
+		 * @default "Expand source"
+		 * @author agorbatchev
+		 * @id strings.expandSource
+		 */
+		expandSource : 'Expand source',
+
+		/**
+		 * Title of any alert window that SyntaxHighlighter might show. Alerts are only displayed in
+		 * case of an error.
+		 *
+		 * @name alert
+		 * @default "SyntaxHighlighter\n\n"
+		 * @author agorbatchev
+		 * @id strings.alert
+		 */
+		alert : 'SyntaxHighlighter\n\n',
+
+		/**
+		 * Message displayed when a required brush isn't found.
+		 *
+		 * @name noBrush
+		 * @default "Can't find brush for: "
+		 * @author agorbatchev
+		 * @id strings.noBrush
+		 */
+		noBrush : 'Can\'t find brush for: ',
+
+		/**
+		 * Message displayed when requested brush wasn't red for `html-script`.
+		 * 
+		 * @name brushNotHtmlScript
+		 * @author agorbatchev
+		 * @id strings.brushNotHtmlScript
+		 */
+		brushNotHtmlScript : 'Brush wasn\'t red for html-script option: '
 	},
 	
 	/** Internal 'global' variables. */
 	vars : {
+		space             : '&nbsp;',
 		discoveredBrushes : null,
-		highlighters : {}
+		highlighters      : {},
+		css               : null
 	},
 	
 	/** This object is populated by user included external brush files. */
@@ -101,177 +315,24 @@ var sh = {
 
 	/** Common regular expressions. */
 	regexLib : {
-		multiLineCComments			: /\/\*[\s\S]*?\*\//gm,
-		singleLineCComments			: /\/\/.*$/gm,
-		singleLinePerlComments		: /#.*$/gm,
-		doubleQuotedString			: /"([^\\"\n]|\\.)*"/g,
-		singleQuotedString			: /'([^\\'\n]|\\.)*'/g,
-		multiLineDoubleQuotedString	: new XRegExp('"([^\\\\"]|\\\\.)*"', 'gs'),
-		multiLineSingleQuotedString	: new XRegExp("'([^\\\\']|\\\\.)*'", 'gs'),
-		xmlComments					: /(&lt;|<)!--[\s\S]*?--(&gt;|>)/gm,
-		url							: /\w+:\/\/[\w-.\/?%&=:@;#]*/g,
-		
+		multiLineCComments          : /\/\*[\s\S]*?\*\//gm,
+		singleLineCComments         : /\/\/.*$/gm,
+		singleLinePerlComments      : /#.*$/gm,
+		doubleQuotedString          : /"([^\\"\n]|\\.)*"/g,
+		singleQuotedString          : /'([^\\'\n]|\\.)*'/g,
+		multiLineDoubleQuotedString : new XRegExp('"([^\\\\"]|\\\\.)*"', 'gs'),
+		multiLineSingleQuotedString : new XRegExp("'([^\\\\']|\\\\.)*'", 'gs'),
+		xmlComments                 : /(&lt;|<)!--[\s\S]*?--(&gt;|>)/gm,
+		url                         : /\w+:\/\/[\w-.\/?%&=:@;#]*/g,
+
 		/** <?= ?> tags. */
-		phpScriptTags 				: { left: /(&lt;|<)\?(?:=|php)?/g, right: /\?(&gt;|>)/g, 'eof' : true },
-		
+		phpScriptTags               : { left: /(&lt;|<)\?(?:=|php)?/g, right: /\?(&gt;|>)/g, 'eof' : true },
+
 		/** <%= %> tags. */
-		aspScriptTags				: { left: /(&lt;|<)%=?/g, right: /%(&gt;|>)/g },
-		
+		aspScriptTags               : { left: /(&lt;|<)%=?/g, right: /%(&gt;|>)/g },
+
 		/** <script> tags. */
-		scriptScriptTags			: { left: /(&lt;|<)\s*script.*?(&gt;|>)/gi, right: /(&lt;|<)\/\s*script\s*(&gt;|>)/gi }
-	},
-
-	toolbar: {
-		/**
-		 * Generates HTML markup for the toolbar.
-		 * @param {Highlighter} highlighter Highlighter instance.
-		 * @return {String} Returns HTML markup.
-		 */
-		getHtml: function(highlighter)
-		{
-			var html = '<div class="toolbar">',
-				items = sh.toolbar.items,
-				list = items.list
-				;
-			
-			function defaultGetHtml(highlighter, name)
-			{
-				return sh.toolbar.getButtonHtml(highlighter, name, sh.config.strings[name]);
-			};
-			
-			for (var i = 0; i < list.length; i++)
-				html += (items[list[i]].getHtml || defaultGetHtml)(highlighter, list[i]);
-			
-			html += '</div>';
-			
-			return html;
-		},
-		
-		/**
-		 * Generates HTML markup for a regular button in the toolbar.
-		 * @param {Highlighter} highlighter Highlighter instance.
-		 * @param {String} commandName		Command name that would be executed.
-		 * @param {String} label			Label text to display.
-		 * @return {String}					Returns HTML markup.
-		 */
-		getButtonHtml: function(highlighter, commandName, label)
-		{
-			return '<span><a href="#" class="toolbar_item'
-				+ ' command_' + commandName
-				+ ' ' + commandName
-				+ '">' + label + '</a></span>'
-				;
-		},
-		
-		/**
-		 * Event handler for a toolbar anchor.
-		 */
-		handler: function(e)
-		{
-			var target = e.target,
-				className = target.className || ''
-				;
-
-			function getValue(name)
-			{
-				var r = new RegExp(name + '_(\\w+)'),
-					match = r.exec(className)
-					;
-
-				return match ? match[1] : null;
-			};
-			
-			var highlighter = getHighlighterById(findParentElement(target, '.syntaxhighlighter').id),
-				commandName = getValue('command')
-				;
-			
-			// execute the toolbar command
-			if (highlighter && commandName)
-				sh.toolbar.items[commandName].execute(highlighter);
-
-			// disable default A click behaviour
-			e.preventDefault();
-		},
-		
-		/** Collection of toolbar items. */
-		items : {
-			// Ordered lis of items in the toolbar. Can't expect `for (var n in items)` to be consistent.
-			list: ['expandSource', 'help'],
-
-			expandSource: {
-				getHtml: function(highlighter)
-				{
-					if (highlighter.getParam('collapse') != true)
-						return '';
-						
-					var title = highlighter.getParam('title');
-					return sh.toolbar.getButtonHtml(highlighter, 'expandSource', title ? title : sh.config.strings.expandSource);
-				},
-			
-				execute: function(highlighter)
-				{
-					var div = getHighlighterDivById(highlighter.id);
-					removeClass(div, 'collapsed');
-				}
-			},
-
-			/** Command to display the about dialog window. */
-			help: {
-				execute: function(highlighter)
-				{	
-					var wnd = popup('', '_blank', 500, 250, 'scrollbars=0'),
-						doc = wnd.document
-						;
-					
-					doc.write(sh.config.strings.aboutDialog);
-					doc.close();
-					wnd.focus();
-				}
-			}
-		}
-	},
-
-	/**
-	 * Finds all elements on the page which should be processes by SyntaxHighlighter.
-	 *
-	 * @param {Object} globalParams		Optional parameters which override element's 
-	 * 									parameters. Only used if element is specified.
-	 * 
-	 * @param {Object} element	Optional element to highlight. If none is
-	 * 							provided, all elements in the current document 
-	 * 							are returned which qualify.
-	 *
-	 * @return {Array}	Returns list of <code>{ target: DOMElement, params: Object }</code> objects.
-	 */
-	findElements: function(globalParams, element)
-	{
-		var elements = element ? [element] : toArray(document.getElementsByTagName(sh.config.tagName)), 
-			conf = sh.config,
-			result = []
-			;
-
-		// support for <SCRIPT TYPE="syntaxhighlighter" /> feature
-		if (conf.useScriptTags)
-			elements = elements.concat(getSyntaxHighlighterScriptTags());
-
-		if (elements.length === 0) 
-			return result;
-	
-		for (var i = 0; i < elements.length; i++) 
-		{
-			var item = {
-				target: elements[i], 
-				// local params take precedence over globals
-				params: merge(globalParams, parseParams(elements[i].className))
-			};
-
-			if (item.params['brush'] == null)
-				continue;
-				
-			result.push(item);
-		}
-		
-		return result;
+		scriptScriptTags            : { left: /(&lt;|<)\s*script.*?(&gt;|>)/gi, right: /(&lt;|<)\/\s*script\s*(&gt;|>)/gi }
 	},
 
 	/**
@@ -287,20 +348,27 @@ var sh = {
 	 */ 
 	highlight: function(globalParams, element)
 	{
-		var elements = this.findElements(globalParams, element),
-			propertyName = 'innerHTML', 
-			highlighter = null,
-			conf = sh.config
-			;
+		sh.config = merge(sh.config, getDataAttributes(getElementById('syntaxhighlighter')));
 
+		var elements     = findElementsToHighlight(globalParams, element),
+			propertyName = 'innerHTML',
+			highlighter  = null,
+			vars         = sh.vars,
+			conf         = sh.config,
+			i
+			;
+			
 		if (elements.length === 0) 
 			return;
-	
-		for (var i = 0; i < elements.length; i++) 
+
+		if(!vars.css)
+			vars.css = getSyntaxHighlighterCss();
+		
+		for (i = 0; i < elements.length; i++) 
 		{
-			var element = elements[i],
-				target = element.target,
-				params = element.params,
+			var element   = elements[i],
+				target    = element.target,
+				params    = element.params,
 				brushName = params.brush,
 				code
 				;
@@ -327,15 +395,14 @@ var sh = {
 			code = target[propertyName];
 			
 			// remove CDATA from <SCRIPT/> tags if it's present
-			if (conf.useScriptTags)
-				code = stripCData(code);
+			code = stripCData(code);
 				
 			// Inject title if the attribute is present
 			if ((target.title || '') != '')
 				params.title = target.title;
 				
 			params['brush'] = brushName;
-			highlighter.init(params);
+			highlighter.init(params, target.id);
 			element = highlighter.getDiv(code);
 			
 			// carry over ID
@@ -352,13 +419,171 @@ var sh = {
 	 */
 	all: function(params)
 	{
-		attachEvent(
-			window,
-			'load',
-			function() { sh.highlight(params); }
-		);
+		bindReady(function()
+		{
+			sh.highlight(params);
+		});
 	}
 }; // end of sh
+
+/**
+ * Borrowed from jQuery code. This is equivalent to $(callback) or $(document).ready(callback);
+ */
+function bindReady(callback)
+{
+	var isReady = false;
+	
+	function ready()
+	{
+		if(isReady == false)
+			callback();
+		
+		isReady = true;
+	};
+	
+	function DOMContentLoaded() 
+	{
+		document.removeEventListener('DOMContentLoaded', DOMContentLoaded, false);
+		ready();
+	};
+	
+	// The DOM ready check for Internet Explorer
+	function doScrollCheck() 
+	{
+		try 
+		{
+			// If IE is used, use the trick by Diego Perini
+			// http://javascript.nwbox.com/IEContentLoaded/
+			document.documentElement.doScroll('left');
+		} 
+		catch(e) 
+		{
+			setTimeout(doScrollCheck, 1);
+			return;
+		}
+		
+		// and execute any waiting functions
+		ready();
+	};
+	
+	// Mozilla, Opera and webkit nightlies currently support this event
+	if(document.addEventListener) 
+	{
+		// Use the handy event callback
+		document.addEventListener('DOMContentLoaded', DOMContentLoaded, false);
+		
+		// A fallback to window.onload, that will always work
+		window.addEventListener('load', ready, false);
+	} 
+	// If IE event model is used
+	else if(document.attachEvent) 
+	{
+		// ensure firing before onload, maybe late but safe also for iframes
+		document.attachEvent('onreadystatechange', DOMContentLoaded);
+		
+		// A fallback to window.onload, that will always work
+		window.attachEvent('onload', ready);
+
+		// If IE and not a frame continually check to see if the document is ready
+		var toplevel = false;
+
+		try
+		{
+			toplevel = window.frameElement == null;
+		} 
+		catch(e) {}
+
+		if(document.documentElement.doScroll && toplevel) 
+			doScrollCheck();
+	}
+};
+
+/**
+ * Finds all elements on the page which should be processes by SyntaxHighlighter.
+ *
+ * @param {Object} globalParams		Optional parameters which override element's 
+ * 									parameters. Only used if element is specified.
+ * 
+ * @param {Object} element	Optional element to highlight. If none is
+ * 							provided, all elements in the current document 
+ * 							are returned which qualify.
+ *
+ * @return {Array}	Returns list of <code>{ target: DOMElement, params: Object }</code> objects.
+ */
+function findElementsToHighlight(globalParams, element)
+{
+	var elements = element ? [element] : toArray(document.getElementsByTagName(sh.config.tagName)),
+		conf     = sh.config,
+		result   = [],
+		params,
+		element, 
+		item
+		;
+
+	function getAttribute(element, name)
+	{
+		var result = element.getAttribute(name);
+		return result && result.length > 0 ? result : null;
+	};
+
+	// support for <SCRIPT TYPE="syntaxhighlighter" /> feature
+	elements = elements.concat(getSyntaxHighlighterScriptTags());
+
+	if (elements.length === 0) 
+		return result;
+
+	for (var i = 0; i < elements.length; i++) 
+	{
+		element = elements[i];
+		// local params take precedence over globals
+		params = merge(getDataAttributes(element), parseParams(getAttribute(element, 'data-sh') || getAttribute(element, 'class')));
+		item = {
+			target : element,
+			params : merge(globalParams, params)
+		};
+			
+		if (item.params['brush'] == null)
+			continue;
+			
+		result.push(item);
+	}
+	
+	return result;
+};
+
+// this function is used by autoloader
+sh.findElementsToHighlight = findElementsToHighlight;
+
+/**
+ * Finds all syntaxhighlighter css that is currently loaded.
+ * @author agorbatchev
+ * @date 2012/03/18
+ */
+function getSyntaxHighlighterCss()
+{
+	var styles      = document.styleSheets,
+		completeCss = '',
+		rules,
+		cssText,
+		i,
+		j
+		;
+
+	for(i = 0; i < styles.length; i++)
+	{
+		rules = styles[i].cssRules || [];
+
+		for(j = 0; j < rules.length; j++)
+		{
+			cssText = rules[j].cssText;
+
+			if(cssText.indexOf('.syntaxhighlighter') >= 0)
+				completeCss += cssText + '\n';
+		}
+	}
+
+	return completeCss;
+};
 
 /**
  * Checks if target DOM elements has specified CSS class.
@@ -419,24 +644,40 @@ function splitLines(block)
 }
 
 /**
- * Generates HTML ID for the highlighter.
- * @param {String} highlighterId Highlighter ID.
- * @return {String} Returns HTML ID.
- */
-function getHighlighterId(id)
-{
-	var prefix = 'highlighter_';
-	return id.indexOf(prefix) == 0 ? id : prefix + id;
-};
-
-/**
  * Finds Highlighter instance by ID.
  * @param {String} highlighterId Highlighter ID.
  * @return {Highlighter} Returns instance of the highlighter.
  */
 function getHighlighterById(id)
 {
-	return sh.vars.highlighters[getHighlighterId(id)];
+	return sh.vars.highlighters[id];
+};
+
+/**
+ * Shortcut for document.createElement()
+ * @date 2010/12/17
+ */
+function createElement(name)
+{
+	return document.createElement(name);
+};
+
+/**
+ * Shortcut for document.getElementById()
+ * @date 2010/12/17
+ */
+function getElementById(id)
+{
+	return document.getElementById(id);
+};
+
+/**
+ * Returns IFRAME's window.document.
+ * @date 2010/12/17
+ */
+function getIframeDocument(iframe)
+{
+	return iframe.contentDocument;
 };
 
 /**
@@ -446,7 +687,12 @@ function getHighlighterById(id)
  */
 function getHighlighterDivById(id)
 {
-	return document.getElementById(getHighlighterId(id));
+	var div = getElementById(id);
+	
+	if (div.tagName == 'IFRAME')
+		div = getIframeDocument(div).getElementById(id);
+	
+	return div;
 };
 
 /**
@@ -456,7 +702,7 @@ function getHighlighterDivById(id)
  */
 function storeHighlighter(highlighter)
 {
-	sh.vars.highlighters[getHighlighterId(highlighter.id)] = highlighter;
+	sh.vars.highlighters[highlighter.id] = highlighter;
 };
 
 /**
@@ -475,7 +721,8 @@ function findElement(target, search, reverse /* optional */)
 	var nodes			= reverse != true ? target.childNodes : [ target.parentNode ],
 		propertyToFind	= { '#' : 'id', '.' : 'className' }[search.substr(0, 1)] || 'nodeName',
 		expectedValue,
-		found
+		found,
+		i
 		;
 
 	expectedValue = propertyToFind != 'nodeName'
@@ -487,7 +734,7 @@ function findElement(target, search, reverse /* optional */)
 	if ((target[propertyToFind] || '').indexOf(expectedValue) != -1)
 		return target;
 	
-	for (var i = 0; nodes && i < nodes.length && found == null; i++)
+	for (i = 0; nodes && i < nodes.length && found == null; i++)
 		found = findElement(nodes[i], search, reverse);
 	
 	return found;
@@ -563,33 +810,6 @@ function toBoolean(value)
 };
 
 /**
- * Opens up a centered popup window.
- * @param {String} url		URL to open in the window.
- * @param {String} name		Popup name.
- * @param {int} width		Popup width.
- * @param {int} height		Popup height.
- * @param {String} options	window.open() options.
- * @return {Window}			Returns window instance.
- */
-function popup(url, name, width, height, options)
-{
-	var x = (screen.width - width) / 2,
-		y = (screen.height - height) / 2
-		;
-		
-	options +=	', left=' + x + 
-				', top=' + y +
-				', width=' + width +
-				', height=' + height
-		;
-	options = options.replace(/^,/, '');
-
-	var win = window.open(url, name, options);
-	win.focus();
-	return win;
-};
-
-/**
  * Adds event handler to the target object.
  * @param {Object} obj		Target object.
  * @param {String} type		Name of the event.
@@ -629,7 +849,7 @@ function attachEvent(obj, type, func, scope)
  */
 function alert(str)
 {
-	window.alert(sh.config.strings.alert + str);
+	window.alert(sh.strings.alert + str);
 };
 
 /**
@@ -672,7 +892,7 @@ function findBrush(alias, showAlert)
 	result = sh.brushes[brushes[alias]];
 
 	if (result == null && showAlert)
-		alert(sh.config.strings.noBrush + alias);
+		alert(sh.strings.noBrush + alias);
 	
 	return result;
 };
@@ -684,9 +904,11 @@ function findBrush(alias, showAlert)
  */
 function eachLine(str, callback)
 {
-	var lines = splitLines(str);
+	var lines = splitLines(str),
+		i
+		;
 	
-	for (var i = 0; i < lines.length; i++)
+	for (i = 0; i < lines.length; i++)
 		lines[i] = callback(lines[i], i);
 		
 	// include \r to enable copy-paste on windows (ie8) without getting everything on one line
@@ -703,6 +925,44 @@ function eachLine(str, callback)
 function trimFirstAndLastLines(str)
 {
 	return str.replace(/^[ ]*[\n]+|[\n]*[ ]*$/g, '');
+};
+
+function getDataAttributes(node)
+{
+	if(!node)
+		return {};
+
+	var result     = {},
+		attributes = node.attributes,
+		item,
+		name,
+		value,
+		i
+		;
+
+	for(i = 0; i < attributes.length; i++)
+	{
+		item = attributes[i];
+		name = item.name;
+
+		if(name.indexOf('data-') === 0)
+		{
+			name = name.substr(5).replace(/-(\w)/g, function(match, letter)
+			{
+				return letter.toUpperCase();
+			});
+
+			value = item.value || '';
+			
+			// auto convert true/false to boolean
+			if(/^(true|false)$/.test(value))
+				value = value === 'true';
+
+			result[name] = value;
+		}
+	}
+
+	return result;
 };
 
 /**
@@ -740,9 +1000,7 @@ function parseParams(str)
 
 	while ((match = regex.exec(str)) != null) 
 	{
-		var value = match.value
-			.replace(/^['"]|['"]$/g, '') // strip quotes from end of strings
-			;
+		var value = match.value.replace(/^['"]|['"]$/g, ''); // strip quotes from end of strings 
 		
 		// try to parse array value
 		if (value != null && arrayRegex.test(value))
@@ -777,7 +1035,7 @@ function wrapLinesWithCode(str, css)
 		var spaces = '';
 		
 		for (var i = 0; i < m.length - 1; i++)
-			spaces += sh.config.space;
+			spaces += sh.vars.space;
 		
 		return spaces + ' ';
 	});
@@ -850,8 +1108,8 @@ function processTabs(code, tabSize)
  */
 function processSmartTabs(code, tabSize)
 {
-	var lines = splitLines(code),
-		tab = '\t',
+	var lines  = splitLines(code),
+		tab    = '\t',
 		spaces = ''
 		;
 	
@@ -927,10 +1185,10 @@ function trim(str)
  */
 function unindent(str)
 {
-	var lines = splitLines(fixInputString(str)),
+	var lines   = splitLines(fixInputString(str)),
 		indents = new Array(),
-		regex = /^\s*/,
-		min = 1000
+		regex   = /^\s*/,
+		min     = 1000
 		;
 	
 	// go through every line and check for common number of indents
@@ -1055,12 +1313,13 @@ function processUrls(code)
  */
 function getSyntaxHighlighterScriptTags()
 {
-	var tags = document.getElementsByTagName('script'),
-		result = []
+	var tags   = document.getElementsByTagName('script'),
+		result = [],
+		i
 		;
 	
-	for (var i = 0; i < tags.length; i++)
-		if (tags[i].type == 'syntaxhighlighter')
+	for (i = 0; i < tags.length; i++)
+		if (/^(syntaxhighlighter|text\/code)$/.test(tags[i].type))
 			result.push(tags[i]);
 			
 	return result;
@@ -1074,13 +1333,13 @@ function getSyntaxHighlighterScriptTags()
  */
 function stripCData(original)
 {
-	var left = '<![CDATA[',
-		right = ']]>',
-		// for some reason IE inserts some leading blanks here
-		copy = trim(original),
-		changed = false,
-		leftLength = left.length,
-		rightLength = right.length
+	var left        = '<![CDATA[',
+		right       = ']]>',
+		copy        = trim(original), // for some reason IE inserts some leading blanks here
+		changed     = false,
+		leftLength  = left.length,
+		rightLength = right.length,
+		copyLength
 		;
 	
 	if (copy.indexOf(left) == 0)
@@ -1089,7 +1348,7 @@ function stripCData(original)
 		changed = true;
 	}
 	
-	var copyLength = copy.length;
+	copyLength = copy.length;
 	
 	if (copy.indexOf(right) == copyLength - rightLength)
 	{
@@ -1100,56 +1359,25 @@ function stripCData(original)
 	return changed ? copy : original;
 };
 
+// functionality for the mouse hover over the whole highlighter block
 
-/**
- * Quick code mouse double click handler.
- */
-function quickCodeHandler(e)
+var mouseTimeoutId = 0;
+
+function mouseTimeoutAction(e, func)
 {
-	var target = e.target,
-		highlighterDiv = findParentElement(target, '.syntaxhighlighter'),
-		container = findParentElement(target, '.container'),
-		textarea = document.createElement('textarea'),
-		highlighter
-		;
+	var highlighterDiv = findParentElement(e.target, DOT_CLASS_NAME);
+	clearTimeout(mouseTimeoutId);
+	mouseTimeoutId = setTimeout(function() { func(highlighterDiv, 'hover') }, 200);
+};
 
-	if (!container || !highlighterDiv || findElement(container, 'textarea'))
-		return;
+function mouseOverHandler(e)
+{
+	mouseTimeoutAction(e, addClass);
+};
 
-	highlighter = getHighlighterById(highlighterDiv.id);
-	
-	// add source class name
-	addClass(highlighterDiv, 'source');
-
-	// Have to go over each line and grab it's text, can't just do it on the
-	// container because Firefox loses all \n where as Webkit doesn't.
-	var lines = container.childNodes,
-		code = []
-		;
-	
-	for (var i = 0; i < lines.length; i++)
-		code.push(lines[i].innerText || lines[i].textContent);
-	
-	// using \r instead of \r or \r\n makes this work equally well on IE, FF and Webkit
-	code = code.join('\r');
-
-    // For Webkit browsers, replace nbsp with a breaking space
-    code = code.replace(/\u00a0/g, " ");
-	
-	// inject <textarea/> tag
-	textarea.appendChild(document.createTextNode(code));
-	container.appendChild(textarea);
-	
-	// preselect all text
-	textarea.focus();
-	textarea.select();
-	
-	// set up handler for lost focus
-	attachEvent(textarea, 'blur', function(e)
-	{
-		textarea.parentNode.removeChild(textarea);
-		removeClass(highlighterDiv, 'source');
-	});
+function mouseOutHandler(e)
+{
+	mouseTimeoutAction(e, removeClass);
 };
 
 /**
@@ -1157,11 +1385,13 @@ function quickCodeHandler(e)
  */
 sh.Match = function(value, index, css)
 {
-	this.value = value;
-	this.index = index;
-	this.length = value.length;
-	this.css = css;
-	this.brushName = null;
+	var self = this;
+
+	self.value     = value;
+	self.index     = index;
+	self.length    = value.length;
+	self.css       = css;
+	self.brushName = null;
 };
 
 sh.Match.prototype.toString = function()
@@ -1176,12 +1406,13 @@ sh.Match.prototype.toString = function()
  */
 sh.HtmlScript = function(scriptBrushName)
 {
-	var brushClass = findBrush(scriptBrushName),
+	var brushClass      = findBrush(scriptBrushName),
+		xmlBrush        = new sh.brushes.Xml(),
+		bracketsRegex   = null,
+		ref             = this,
+		methodsToExpose = 'getDiv getHtml init'.split(' '),
 		scriptBrush,
-		xmlBrush = new sh.brushes.Xml(),
-		bracketsRegex = null,
-		ref = this,
-		methodsToExpose = 'getDiv getHtml init'.split(' ')
+		i
 		;
 
 	if (brushClass == null)
@@ -1189,7 +1420,7 @@ sh.HtmlScript = function(scriptBrushName)
 	
 	scriptBrush = new brushClass();
 	
-	for(var i = 0; i < methodsToExpose.length; i++)
+	for(i = 0; i < methodsToExpose.length; i++)
 		// make a closure so we don't lose the name after i changes
 		(function() {
 			var name = methodsToExpose[i];
@@ -1202,7 +1433,7 @@ sh.HtmlScript = function(scriptBrushName)
 	
 	if (scriptBrush.htmlScript == null)
 	{
-		alert(sh.config.strings.brushNotHtmlScript + scriptBrushName);
+		alert(sh.strings.brushNotHtmlScript + scriptBrushName);
 		return;
 	}
 	
@@ -1218,10 +1449,10 @@ sh.HtmlScript = function(scriptBrushName)
 	
 	function process(match, info)
 	{
-		var code = match.code,
-			matches = [],
-			regexList = scriptBrush.regexList,
-			offset = match.index + match.left.length,
+		var code       = match.code,
+			matches    = [],
+			regexList  = scriptBrush.regexList,
+			offset     = match.index + match.left.length,
 			htmlScript = scriptBrush.htmlScript,
 			result
 			;
@@ -1277,16 +1508,6 @@ sh.Highlighter.prototype = {
 	{
 		var result = this.params[name];
 		return toBoolean(result == null ? defaultValue : result);
-	},
-	
-	/**
-	 * Shortcut to document.createElement().
-	 * @param {String} name		Name of the element to create (DIV, A, etc).
-	 * @return {HTMLElement}	Returns new HTML element.
-	 */
-	create: function(name)
-	{
-		return document.createElement(name);
 	},
 	
 	/**
@@ -1351,7 +1572,7 @@ sh.Highlighter.prototype = {
 	 */
 	figureOutLineNumbers: function(code)
 	{
-		var lines = [],
+		var lines     = [],
 			firstLine = parseInt(this.getParam('first-line'))
 			;
 		
@@ -1388,30 +1609,29 @@ sh.Highlighter.prototype = {
 			'line',
 			'number' + lineNumber,
 			'index' + lineIndex,
-			'alt' + (lineNumber % 2 == 0 ? 1 : 2).toString()
+			'alt' + (lineNumber % 2 == 0 ? 1 : 2)
 		];
 		
 		if (this.isLineHighlighted(lineNumber))
 		 	classes.push('highlighted');
 		
-		if (lineNumber == 0)
-			classes.push('break');
-			
-		return '<div class="' + classes.join(' ') + '">' + code + '</div>';
+		return '<div class="' + classes.join(' ') + '">' + code + '\n</div>';
 	},
 	
 	/**
 	 * Generates HTML markup for line number column.
 	 * @param {String} code			Complete code HTML markup.
-	 * @param {Array} lineNumbers	Calculated line numbers.
 	 * @return {String}				Returns HTML markup.
 	 */
-	getLineNumbersHtml: function(code, lineNumbers)
+	getLineNumbersHtml: function(code)
 	{
-		var html = '',
-			count = splitLines(code).length,
-			firstLine = parseInt(this.getParam('first-line')),
-			pad = this.getParam('pad-line-numbers')
+		var self      = this,
+			html      = '',
+			count     = splitLines(code).length,
+			firstLine = parseInt(self.getParam('first-line')),
+			pad       = self.getParam('pad-line-numbers'),
+			lineNumber,
+			i
 			;
 		
 		if (pad == true)
@@ -1419,13 +1639,10 @@ sh.Highlighter.prototype = {
 		else if (isNaN(pad) == true)
 			pad = 0;
 			
-		for (var i = 0; i < count; i++)
+		for (i = 0; i < count; i++)
 		{
-			var lineNumber = lineNumbers ? lineNumbers[i] : firstLine + i,
-				code = lineNumber == 0 ? sh.config.space : padNumber(lineNumber, pad)
-				;
-				
-			html += this.getLineHtml(i, lineNumber, code);
+			lineNumber = firstLine + i;
+			html += self.getLineHtml(i, lineNumber, padNumber(lineNumber, pad) + '&nbsp;');
 		}
 		
 		return html;
@@ -1441,34 +1658,37 @@ sh.Highlighter.prototype = {
 	{
 		html = trim(html);
 		
-		var lines = splitLines(html),
-			padLength = this.getParam('pad-line-numbers'),
-			firstLine = parseInt(this.getParam('first-line')),
-			html = '',
-			brushName = this.getParam('brush')
+		var self      = this,
+			lines     = splitLines(html),
+			padLength = self.getParam('pad-line-numbers'),
+			firstLine = parseInt(self.getParam('first-line')),
+			html      = '',
+			brushName = self.getParam('brush'),
+			space     = sh.vars.space,
+			i
 			;
 
-		for (var i = 0; i < lines.length; i++)
+		for (i = 0; i < lines.length; i++)
 		{
-			var line = lines[i],
-				indent = /^(&nbsp;|\s)+/.exec(line),
-				spaces = null,
-				lineNumber = lineNumbers ? lineNumbers[i] : firstLine + i;
+			var line       = lines[i],
+				indent     = /^(&nbsp;|\s)+/.exec(line),
+				spaces     = null,
+				lineNumber = lineNumbers ? lineNumbers[i] : firstLine + i
 				;
 
 			if (indent != null)
 			{
 				spaces = indent[0].toString();
-				line = line.substr(spaces.length);
-				spaces = spaces.replace(' ', sh.config.space);
+				line   = line.substr(spaces.length);
+				spaces = spaces.replace(' ', space);
 			}
 
 			line = trim(line);
 			
 			if (line.length == 0)
-				line = sh.config.space;
+				line = space;
 			
-			html += this.getLineHtml(
+			html += self.getLineHtml(
 				i,
 				lineNumber, 
 				(spaces != null ? '<code class="' + brushName + ' spaces">' + spaces + '</code>' : '') + line
@@ -1494,8 +1714,8 @@ sh.Highlighter.prototype = {
 	 */
 	getMatchesHtml: function(code, matches)
 	{
-		var pos = 0, 
-			result = '',
+		var pos       = 0,
+			result    = '',
 			brushName = this.getParam('brush', '')
 			;
 		
@@ -1538,82 +1758,96 @@ sh.Highlighter.prototype = {
 	 */
 	getHtml: function(code)
 	{
-		var html = '',
-			classes = [ 'syntaxhighlighter' ],
-			tabSize,
+		var html       = '',
+			classes    = [ CLASS_NAME ],
+			styles     = [],
+			self       = this,
+			config     = sh.config,
+			title      = self.getParam('title'),
+			gutter     = self.getParam('gutter'),
+			tabSize    = self.getParam('tab-size'),
+			padding    = config.padding,
+			fontSize   = config.fontSize,
+			background = config.background,
 			matches,
 			lineNumbers
 			;
 		
-		// process light mode
-		if (this.getParam('light') == true)
-			this.params.toolbar = this.params.gutter = false;
+		if (padding != true)
+			classes.push('nopadding');
 
-		className = 'syntaxhighlighter';
+		if (fontSize != null)
+			styles.push('font-size:' + fontSize);
 
-		if (this.getParam('collapse') == true)
-			classes.push('collapsed');
+		if (background != null)
+			styles.push('background:' + background);
+
+		if (self.getParam('collapse'))
+		{
+			classes.push(COLLAPSED);
+
+			if (!title)
+			{
+				title = sh.strings.expandSource;
+				classes.push('notitle');
+			}
+		}
 		
-		if ((gutter = this.getParam('gutter')) == false)
+		if (!gutter)
 			classes.push('nogutter');
 
-		// add custom user style name
-		classes.push(this.getParam('class-name'));
-
 		// add brush alias to the class name for custom CSS
-		classes.push(this.getParam('brush'));
+		classes.push(self.getParam('brush'));
 
 		code = trimFirstAndLastLines(code)
 			.replace(/\r/g, ' ') // IE lets these buggers through
 			;
 
-		tabSize = this.getParam('tab-size');
-
 		// replace tabs with spaces
-		code = this.getParam('smart-tabs') == true
+		code = self.getParam('smart-tabs')
 			? processSmartTabs(code, tabSize)
 			: processTabs(code, tabSize)
 			;
 
 		// unindent code by the common indentation
-		if (this.getParam('unindent'))
+		if (self.getParam('unindent'))
 			code = unindent(code);
 
 		if (gutter)
-			lineNumbers = this.figureOutLineNumbers(code);
+			lineNumbers = self.figureOutLineNumbers(code);
 		
 		// find matches in the code using brushes regex list
-		matches = this.findMatches(this.regexList, code);
+		matches = self.findMatches(self.regexList, code);
 		// processes found matches into the html
-		html = this.getMatchesHtml(code, matches);
+		html = self.getMatchesHtml(code, matches);
 		// finally, split all lines so that they wrap well
-		html = this.getCodeLinesHtml(html, lineNumbers);
+		html = self.getCodeLinesHtml(html, lineNumbers);
 
 		// finally, process the links
-		if (this.getParam('auto-links'))
+		if (self.getParam('auto-links'))
 			html = processUrls(html);
 		
 		if (typeof(navigator) != 'undefined' && navigator.userAgent && navigator.userAgent.match(/MSIE/))
 			classes.push('ie');
 		
-		html = 
-			'<div id="' + getHighlighterId(this.id) + '" class="' + classes.join(' ') + '">'
-				+ (this.getParam('toolbar') ? sh.toolbar.getHtml(this) : '')
+		html = (
+			'<div id="' + self.id + '" class="' + classes.join(' ') + '" style="' + styles.join(';') + '">'
 				+ '<table border="0" cellpadding="0" cellspacing="0">'
-					+ this.getTitleHtml(this.getParam('title'))
+					+ self.getTitleHtml(title)
 					+ '<tbody>'
 						+ '<tr>'
-							+ (gutter ? '<td class="gutter">' + this.getLineNumbersHtml(code) + '</td>' : '')
+							+ (gutter ? '<td class="gutter" align="right"><code>' + self.getLineNumbersHtml(code) + '</code></td>' : '')
 							+ '<td class="code">'
-								+ '<div class="container">'
+								+ '<div class="container"><code>'
 									+ html
-								+ '</div>'
+								+ '</code></div>'
 							+ '</td>'
 						+ '</tr>'
 					+ '</tbody>'
 				+ '</table>'
+				+ '<a href="http://syntaxhighlighterjs.com?rel=' + window.location.toString() + '" class="about">awesome by syntaxhighlighter.js</a>'
 			+ '</div>'
-			;
+		);
 			
 		return html;
 	},
@@ -1625,24 +1859,90 @@ sh.Highlighter.prototype = {
 	 */
 	getDiv: function(code)
 	{
-		if (code === null) 
-			code = '';
-		
-		this.code = code;
+		code = code || '';
 
-		var div = this.create('div');
+		var self   = this,
+			vars   = sh.vars,
+			html   = self.getHtml(code),
+			iframe = createElement('iframe')
+			;
 
-		// create main HTML
-		div.innerHTML = this.getHtml(code);
+		self.code = code;
+			
+		iframe.className = CLASS_NAME + '_iframe';
+		iframe.id        = self.id;
 		
-		// set up click handlers
-		if (this.getParam('toolbar'))
-			attachEvent(findElement(div, '.toolbar'), 'click', sh.toolbar.handler);
+		iframe.setAttribute('frameBorder', '0');
+		iframe.setAttribute('allowTransparency', 'true');
 		
-		if (this.getParam('quick-code'))
-			attachEvent(findElement(div, '.code'), 'dblclick', quickCodeHandler);
+		function loop()
+		{
+			var doc = getIframeDocument(iframe);
+			
+			// loop until the iframe document is available
+			if (!doc)
+				return setTimeout(loop, 10);
+			
+			var style = doc.createElement('style'),
+				body  = doc.body,
+				div,
+				container
+				;
+
+			function updateHeight()
+			{
+				iframe.setAttribute('style', 'height:' + parseInt(body.offsetHeight) + 'px !important');
+			};
+
+			body.innerHTML = html;
+			style.appendChild(doc.createTextNode(vars.css));
+			body.appendChild(style);
+			body.setAttribute('style', 'margin:0;padding:0;overflow:hidden');
+			updateHeight();
+
+			div       = getHighlighterDivById(self.id);
+			container = findElement(div, '.container');
+
+			if (self.getParam('quick-code'))
+				attachEvent(findElement(div, '.code'), 'dblclick', function(e)
+				{
+					if(!window.getSelection)
+						return;
+
+					e.preventDefault();
+
+					var selection = iframe.contentWindow.getSelection(),
+						range     = iframe.contentDocument.createRange()
+						;
+
+					range.selectNode(container);
+					selection.removeAllRanges();
+					selection.addRange(range);
+				});
+
+			if (self.getParam('collapse'))
+				attachEvent(div, 'click', function(e)
+				{
+					if (hasClass(div, COLLAPSED))
+					{
+						removeClass(div, COLLAPSED);
+						updateHeight();
+					}
+				});
+			
+			attachEvent(div, 'mouseover', mouseOverHandler);
+			attachEvent(div, 'mouseout', mouseOutHandler);
+
+			attachEvent(iframe.contentWindow, 'resize', function(e)
+			{
+				var box = container.getBoundingClientRect();
+				container.style.width = (div.offsetWidth - box.left) + 'px';
+			});
+		};
+	
+		loop();
 		
-		return div;
+		return iframe;
 	},
 	
 	/**
@@ -1652,20 +1952,17 @@ sh.Highlighter.prototype = {
 	 * `new SyntaxHighlighter.Highlighter()` call when setting up brush inheritence.
 	 *
 	 * @param {Hash} params Highlighter parameters.
+	 * @param {String} elementId Optional element ID that would be used in place of autogenerated one.
 	 */
-	init: function(params)
+	init: function(params, elementId)
 	{
-		this.id = guid();
+		this.id = elementId || ('highlighter_' + guid());
 		
 		// register this instance in the highlighters list
 		storeHighlighter(this);
 		
 		// local params take precedence over defaults
 		this.params = merge(sh.defaults, params || {})
-		
-		// process light mode
-		if (this.getParam('light') == true)
-			this.params.toolbar = this.params.gutter = false;
 	},
 	
 	/**
@@ -1708,7 +2005,7 @@ sh.Highlighter.prototype = {
 }; // end of Highlighter
 
 return sh;
-}(); // end of anonymous function
+}(window); // end of anonymous function
 
 // CommonJS
 typeof(exports) != 'undefined' ? exports.SyntaxHighlighter = SyntaxHighlighter : null;

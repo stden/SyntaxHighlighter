@@ -31,9 +31,10 @@ queue(function()
 
 	test('basic html check of default elements', function()
 	{
-		$sh = $('#sh_001_basic');
+		$sh = getSh('#sh_001_basic');
+
 		ok_sh($sh);
-		ok_toolbar($sh);
+		ok_promo($sh);
 		ok_caption($sh, 'Title/caption should render');
 		ok_gutter($sh);
 		ok_code($sh);
